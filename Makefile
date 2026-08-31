@@ -40,7 +40,7 @@ TERMINAL ?= WSL
 
 .PHONY: all clean run iso
 
-all: $(ISO_IMAGE)
+all: $(ISO_IMAGE) run
 
 # Gerar ISO (depende do kernel.bin e do grub.cfg)
 $(ISO_IMAGE): $(KERNEL_BIN) $(SRC_DIR)/grub.cfg

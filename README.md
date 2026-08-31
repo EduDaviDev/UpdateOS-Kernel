@@ -1,24 +1,33 @@
 # UpdateOS Kernel (UpOS)
 
-Kernel simples para o sistema operacional UpdateOS, com suporte a saída de texto em modo VGA.  
-Exibe "Hello, World!" na inicialização.
+README em Português🇧🇷🇧🇷🇧🇷: 
+README in English🇺🇸🇺🇸🇺🇸: 
+README en Español🇪🇸🇪🇸🇪🇸: 
 
-## Compilação
+A simple kernel for the UpdateOS operating system, featuring VGA-mode text output support.
+Displays "Hello, World!" upon startup.
 
-Certifique-se de ter as ferramentas necessárias:
+## Compilation
+
+Ensure you have the necessary tools installed:
 - `nasm`
-- `gcc` (com suporte a `-m32`)
+- `gcc` (with `-m32` support)
 - `ld`
-- `grub-mkrescue` (para gerar ISO)
-- `qemu-system-i386` (para execução)
+- `grub-mkrescue` (to generate the ISO)
+- `qemu-system-i386` (for execution)
 
-Para compilar tudo (kernel + ISO):
+To compile everything (kernel + ISO) and run:
 
 ```bash
 make
 ```
+or
+```bash
+make all
+```
 
-Apenas o kernel (sem ISO):
+Kernel only (without ISO):
 
 ```bash
 make kernel
+```
