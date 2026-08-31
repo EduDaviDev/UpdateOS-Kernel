@@ -4,3 +4,5 @@
 *.img
 *.iso
 .DS_Store
+build/
+logs/

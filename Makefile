@@ -6,7 +6,7 @@ ASM = nasm
 CC = gcc
 LD = ld
 CFLAGS = -m32 -ffreestanding -nostdlib -fno-pie -fno-stack-protector -Wall -Wextra -I./kernel/drivers
-LDFLAGS = -m elf_i386 -Ttext 0x100000 -nostdlib
+LDFLAGS = -m elf_i386 -nostdlib -T $(LINKER_SCRIPT)
 
 # Diretórios
 SRC_DIR = kernel
@@ -16,6 +16,9 @@ OBJ_DIR = $(BUILD_DIR)/kernel/objs
 ISO_DIR = $(BUILD_DIR)/iso
 BOOT_DIR = $(ISO_DIR)/boot
 GRUB_DIR = $(BOOT_DIR)/grub
+
+# Script de linker
+LINKER_SCRIPT = $(SRC_DIR)/linker.ld
 
 # Arquivos fontes
 C_SRCS = $(shell find $(SRC_DIR) -type f -name '*.c')
