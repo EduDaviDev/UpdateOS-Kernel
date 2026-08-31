@@ -1,0 +1,26 @@
+Crie um kernel simples chamado UpdateOS Kernel/ UpOS Kernel para um sistema operacional chamado UpdateOS que eu vou criar
+
+estrutura:
+
+UpOS/
+	Makefile
+	.git/...
+	.gitignore
+	Readme.md
+	kernel/
+		kernel.c //kernel_main();
+		io.h
+		grub.cfg
+		mboot.asm
+		
+		drivers/
+			video.c
+			video.h
+
+funções video.h:
+	txt_putc(char c);
+	txt_print(char *string);
+	txt_pos_putc(int x, int y, char c);
+	txt_pos_print(int x, int y, char *string);
+
+apenas é um hello world
