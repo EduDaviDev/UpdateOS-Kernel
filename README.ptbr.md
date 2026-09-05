@@ -1,7 +1,8 @@
 # UpdateOS Kernel (UpOS)
 
-README in [English🇺🇸🇺🇸🇺🇸](https://github.com/EduDaviDev/UpdateOS-Kernel/blob/main/README.md) <br>
-README en [Español🇪🇸🇪🇸🇪🇸](https://github.com/EduDaviDev/UpdateOS-Kernel/blob/main/README.es.md)<br>
+README em Português🇧🇷🇧🇷🇧🇷: 
+README in English🇺🇸🇺🇸🇺🇸: 
+README en Español🇪🇸🇪🇸🇪🇸: 
 
 Kernel simples para o sistema operacional UpdateOS, com suporte a saída de texto em modo VGA.  
 Exibe "Hello, World!" na inicialização.
