@@ -67,3 +67,12 @@ void txt_pos_print(int x, int y, const char *str) {
         x++;
     }
 }
+
+void txt_clear() {
+	for (int y = 0; y < VGA_ROWS; y++) {
+		for (int x = 0; x < VGA_COLS; x++) {
+			video_mem[y * VGA_COLS + x] = (uint16_t)' ' | (VGA_ATTR << 8);
+		}
+	}
+	move_cursor(0, 0);
+}

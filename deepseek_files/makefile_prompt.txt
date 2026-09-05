@@ -1,0 +1,18 @@
+crie um makefile:
+
+make / make all / make system:
+
+	executa: make kernel iso run
+
+make kernel:
+	rastreia todos os arquivos .c .cpp .c++ .asm(nasm) .s(GAS) em kernel/... e compila em build/kernel para finalizar linkando usando kernel/linker.ld para sair em build/upknel.bin
+	copy build/upknel.bin build/iso/boot/grub/kernel.bin
+
+make iso:
+	copy kernel/iso build/iso/system
+	grub-mkrescue
+
+make run:
+	qemu-i386
+	serial -> logs/serial.log
+	-D logs/qemu.log -d int,...

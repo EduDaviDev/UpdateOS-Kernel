@@ -3,6 +3,7 @@
 void kernel_main(void) {
     // Inicialização básica (opcional)
     // Escreve "Hello, World!" na tela
+	txt_clear();
     txt_print("Hello, World!");
 
     // Mantém a CPU ocupada

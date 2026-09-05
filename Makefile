@@ -1,87 +1,136 @@
-# Makefile para UpOS Kernel
-# Uso: make [all|clean|run|iso]
-# Variável TERMINAL: UBUNTU (execução direta) ou WSL (via cmd.exe com logs)
+# ============================================================================
+# Makefile para kernel UPK
+# Alvo: all, system, kernel, iso, run, clean
+# ============================================================================
 
-ASM = nasm
-CC = gcc
-LD = ld
-CFLAGS = -m32 -ffreestanding -nostdlib -fno-pie -fno-stack-protector -Wall -Wextra -I./kernel/drivers
-LDFLAGS = -m elf_i386 -nostdlib -T $(LINKER_SCRIPT)
+# --------------------------------------
+# Ferramentas
+# --------------------------------------
+CC      := gcc
+CXX     := g++
+AS      := as
+LD      := ld
+NASM    := nasm
+QEMU    := qemu-system-i386
 
-# Diretórios
-SRC_DIR = kernel
-DRV_DIR = $(SRC_DIR)/drivers
-BUILD_DIR = build
-OBJ_DIR = $(BUILD_DIR)/kernel/objs
-ISO_DIR = $(BUILD_DIR)/iso
-BOOT_DIR = $(ISO_DIR)/boot
-GRUB_DIR = $(BOOT_DIR)/grub
+# --------------------------------------
+# Flags
+# --------------------------------------
+CFLAGS   := -m32 -ffreestanding -nostdlib -I. -Wall -Wextra -g
+CXXFLAGS := -m32 -ffreestanding -nostdlib -fno-exceptions -fno-rtti -I. -Wall -Wextra -g
+ASFLAGS  := -m32
+LDFLAGS  := -m elf_i386 -T kernel/linker.ld -nostdlib
 
-# Script de linker
-LINKER_SCRIPT = $(SRC_DIR)/linker.ld
+# --------------------------------------
+# Localização dos fontes
+# --------------------------------------
+SOURCES_C   := $(shell find kernel -type f -name "*.c")
+SOURCES_CPP := $(shell find kernel -type f \( -name "*.cpp" -o -name "*.c++" -o -name "*.cc" \))
+SOURCES_ASM := $(shell find kernel -type f -name "*.asm")
+SOURCES_S   := $(shell find kernel -type f -name "*.s")
 
-# Arquivos fontes
-C_SRCS = $(shell find $(SRC_DIR) -type f -name '*.c')
-ASM_SRCS = $(shell find $(SRC_DIR) -type f -name '*.asm')
-S_SRCS = $(shell find $(SRC_DIR) -type f -name '*.s')
+# --------------------------------------
+# Objectos (mantêm estrutura de diretórios)
+# --------------------------------------
+OBJS_C   := $(addsuffix .o, $(basename $(subst kernel/,build/kernel/objs/,$(SOURCES_C))))
+OBJS_CPP := $(addsuffix .o, $(basename $(subst kernel/,build/kernel/objs/,$(SOURCES_CPP))))
+OBJS_ASM := $(addsuffix .o, $(basename $(subst kernel/,build/kernel/objs/,$(SOURCES_ASM))))
+OBJS_S   := $(addsuffix .o, $(basename $(subst kernel/,build/kernel/objs/,$(SOURCES_S))))
 
-# Objetos correspondentes (substituindo caminhos e extensões)
-C_OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(C_SRCS))
-ASM_OBJS = $(patsubst $(SRC_DIR)/%.asm, $(OBJ_DIR)/%.o, $(ASM_SRCS))
-S_OBJS = $(patsubst $(SRC_DIR)/%.s, $(OBJ_DIR)/%.o, $(S_SRCS))
-OBJS = $(C_OBJS) $(ASM_OBJS) $(S_OBJS)
+OBJS := $(OBJS_C) $(OBJS_CPP) $(OBJS_ASM) $(OBJS_S)
 
-# Arquivos finais
-KERNEL_BIN = $(BUILD_DIR)/kernel.bin
-ISO_IMAGE = $(BUILD_DIR)/upos.iso
+OS := WSL
 
-# Padrão: WSL
-TERMINAL ?= WSL
-
-.PHONY: all clean run iso
-
-all: $(ISO_IMAGE) run
-
-# Gerar ISO (depende do kernel.bin e do grub.cfg)
-$(ISO_IMAGE): $(KERNEL_BIN) $(SRC_DIR)/grub.cfg
-	@mkdir -p $(GRUB_DIR)
-	cp $(KERNEL_BIN) $(BOOT_DIR)/
-	cp $(SRC_DIR)/grub.cfg $(GRUB_DIR)/
-	grub-mkrescue -o $@ $(ISO_DIR)
-
-# Linkar o kernel
-$(KERNEL_BIN): $(OBJS)
-	@mkdir -p $(BUILD_DIR)
-	$(LD) $(LDFLAGS) -o $@ $^
-
-# Compilar arquivos C
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Compilar arquivos .asm (NASM)
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.asm
-	@mkdir -p $(dir $@)
-	$(ASM) -f elf32 $< -o $@
-
-# Compilar arquivos .s (GAS)
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Executar (depende do ISO para WSL, do kernel.bin para UBUNTU)
-run: $(KERNEL_BIN) $(ISO_IMAGE)
-ifeq ($(TERMINAL),UBUNTU)
-	qemu-system-i386 -cdrom $(ISO_IMAGE) -boot d -serial file:logs/serial.log -D logs/qemu.log
-else
-	# WSL: executar via cmd.exe com logs
-	@mkdir -p logs
-	cmd.exe /c "qemu-system-i386 -cdrom $(ISO_IMAGE) -boot d -serial file:logs/serial.log -D logs/qemu.log"
+ifeq ($(OS), WSL)
+	CMD := cmd.exe /C "
+	CMDEND := "
+else ifeq ($(OS), Linux)
+	CMD :=
+	CMDEND :=
 endif
 
-# Limpeza
-clean:
-	rm -rf $(BUILD_DIR) logs
+# --------------------------------------
+# Alvos principais
+# --------------------------------------
+.PHONY: all system kernel iso run clean
 
-# Regra auxiliar para apenas o kernel (sem ISO)
-kernel: $(KERNEL_BIN)
+all: system
+
+system: kernel iso run
+
+# --------------------------------------
+# kernel : compila e coloca o binário na ISO
+# --------------------------------------
+kernel: build/iso/boot/grub/kernel.bin
+
+# A cópia é feita na regra que gera o .bin dentro da ISO
+build/iso/boot/grub/kernel.bin: build/upknel.bin
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+# Linkagem final do kernel
+build/upknel.bin: $(OBJS) kernel/linker.ld
+	@mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+
+# --------------------------------------
+# iso : gera a imagem ISO
+# --------------------------------------
+iso: build/system.iso
+
+build/system.iso: build/iso/boot/grub/kernel.bin
+	@echo "Copiando arquivos da ISO..."
+	cp -r kernel/iso/. build/iso/system/
+	cp build/upknel.bin build/iso/boot/kernel.bin
+	cp kernel/grub.cfg build/iso/boot/grub/grub.cfg
+	@echo "Gerando ISO com grub-mkrescue..."
+	grub-mkrescue -o $@ build/iso
+
+# --------------------------------------
+# run : executa no QEMU
+# --------------------------------------
+run: iso
+	@mkdir -p logs
+	$(CMD)$(QEMU) -cdrom build/system.iso \
+		-serial file:logs/serial.log \
+		-D logs/qemu.log -d int \
+		-no-reboot -no-shutdown$(CMDEND)
+
+# --------------------------------------
+# Regras de compilação
+# --------------------------------------
+# C
+build/kernel/objs/%.o: kernel/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# C++ (.cpp)
+build/kernel/objs/%.o: kernel/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# C++ (.c++)
+build/kernel/objs/%.o: kernel/%.c++
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# C++ (.cc)
+build/kernel/objs/%.o: kernel/%.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Assembly NASM
+build/kernel/objs/%.o: kernel/%.asm
+	@mkdir -p $(dir $@)
+	$(NASM) -f elf32 -o $@ $<
+
+# Assembly GAS
+build/kernel/objs/%.o: kernel/%.s
+	@mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) -o $@ $<
+
+# --------------------------------------
+# Limpeza
+# --------------------------------------
+clean:
+	rm -rf build logs
